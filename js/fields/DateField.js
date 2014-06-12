@@ -68,19 +68,26 @@
          * @param {boolean} [sendUpdatedEvt] (optional) Wether this setValue should fire the updatedEvt or not (default is true, pass false to NOT send the event)
          */
         setValue:function (val, sendUpdatedEvt) {
-
             // Don't try to parse a date if there is no date
             if (val === '') {
                 inputEx.DateField.superclass.setValue.call(this, '', sendUpdatedEvt);
                 return;
             }
             var str = "";
+
+            //try to convert value to date
+            if (isNaN(Date.parse(val))==false){
+                val = new Date(val);
+            }
+
             if (val instanceof Date) {
                 str = inputEx.DateField.formatDate(val, this.options.dateFormat);
             }
             else if (this.options.valueFormat && val) {
                 var dateVal = inputEx.DateField.parseWithFormat(val, "Y/m/d");
-                str = inputEx.DateField.formatDate(dateVal, this.options.dateFormat);
+                if(dateVal instanceof Date){
+                    str = inputEx.DateField.formatDate(dateVal, this.options.dateFormat);
+                }
             }
             // else date must match this.options.dateFormat
             else {
@@ -120,20 +127,25 @@
      * Those methods are limited but largely enough for our usage
      */
     inputEx.DateField.parseWithFormat = function (sDate, format) {
-        var separator = format.match(/[^Ymd ]/g)[0];
-        if (sDate.indexOf(separator) >= 0) {
-            var ladate = sDate.split(separator);
-            var formatSplit = format.split(separator);
-            var d = parseInt(ladate[ inputEx.indexOf('d', formatSplit) ], 10);
-            var Y = parseInt(ladate[ inputEx.indexOf('Y', formatSplit) ], 10);
-            var m = parseInt(ladate[ inputEx.indexOf('m', formatSplit) ], 10) - 1;
-            return (new Date(Y, m, d));
-        } else {
-            var ladate = sDate.match(/(\d{4})(\d{2})(\d{2})/);
-            var Y = parseInt(ladate[1], 10);
-            var m = parseInt(ladate[2], 10) - 1;
-            var d = parseInt(ladate[3], 10);
-            return (new Date(Y, m, d));
+        try{
+            var separator = format.match(/[^Ymd ]/g)[0];
+            if (sDate.indexOf(separator) >= 0) {
+                var ladate = sDate.split(separator);
+                var formatSplit = format.split(separator);
+                var d = parseInt(ladate[ inputEx.indexOf('d', formatSplit) ], 10);
+                var Y = parseInt(ladate[ inputEx.indexOf('Y', formatSplit) ], 10);
+                var m = parseInt(ladate[ inputEx.indexOf('m', formatSplit) ], 10) - 1;
+                return (new Date(Y, m, d));
+            } else {
+                var ladate = sDate.match(/(\d{4})(\d{2})(\d{2})/);
+                var Y = parseInt(ladate[1], 10);
+                var m = parseInt(ladate[2], 10) - 1;
+                var d = parseInt(ladate[3], 10);
+                return (new Date(Y, m, d));
+            }
+        }catch(e){
+            console.log('Date <' + sDate + '> is not a date or date invalid')
+            return '';
         }
     };
 
@@ -156,7 +168,8 @@
     inputEx.registerType("date", inputEx.DateField, [
         {type:'select', label: I18n.t('form.date.date_format'), name:'dateFormat', choices:[
             { value:"m/d/Y" },
-            { value:"d/m/Y" }
+            { value:"d/m/Y" },
+            { value:"Y/m/d" }
         ] }
     ]);
 
