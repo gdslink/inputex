@@ -76,9 +76,14 @@
             var str = "";
 
             //try to convert value to date
-            if (isNaN(Date.parse(val))==false){
-                val = new Date(val);
+            var tmpDate = new Date(val);
+            if (Object.prototype.toString.call(tmpDate) === "[object Date]"){
+                if( isNaN(tmpDate.getTime())){
+                }else{
+                    val = tmpDate;
+                }
             }
+
 
             if (val instanceof Date) {
                 str = inputEx.DateField.formatDate(val, this.options.dateFormat);
