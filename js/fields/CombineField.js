@@ -226,11 +226,20 @@
         return;
       }
       var i, n = this.inputs.length, offset = 0;
-      for (i = 0; i < n; i++) {
-        var len = parseInt(this.inputs[i].options.maxLength);
-        this.inputs[i].setValue(values.substr(offset, len), false);
-        offset += len;
+
+      if (lang.isArray(values)) {
+          for (i = 0; i < n; i++) {
+              this.inputs[i].setValue(values[i], false);
+          }
+      } else {
+          for (i = 0; i < n; i++) {
+              var len = parseInt(this.inputs[i].options.maxLength);
+              this.inputs[i].setValue(values.substr(offset, len), false);
+              offset += len;
+          }
       }
+
+
 
       this.runFieldsInteractions();
 

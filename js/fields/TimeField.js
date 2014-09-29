@@ -30,7 +30,10 @@ lang.extend(inputEx.TimeField, inputEx.CombineField, {
     */
    getValue: function() {
       var values = inputEx.TimeField.superclass.getValue.call(this);
-      return values.join(':');
+      var v = values.substring(0, 2).concat(":");
+      v = v.concat(values.substring(2, 4).concat(":"));
+      v = v.concat(values.substring(4, 6));
+      return v;
    },
 
    /**
