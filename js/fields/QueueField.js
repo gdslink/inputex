@@ -37,6 +37,10 @@
     this.options.visu = options.visu;
   },
 
+  getValue: function(){
+
+  },
+
   setValue: function(val, sendUpdatedEvt) {
    this.value = val;
 
