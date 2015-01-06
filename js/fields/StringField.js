@@ -142,6 +142,11 @@
             this.el.value = (lang.isNull(value) || lang.isUndefined(value)) ? '' : value;
             // call parent class method to set style and fire updatedEvt
             inputEx.StringField.superclass.setValue.call(this, value, sendUpdatedEvt);
+
+            // update placeholder as needed
+            if (this.options.typeInvite) {
+                this.updateTypeInvite();
+            }
         },
 
         /**
