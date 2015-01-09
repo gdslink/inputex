@@ -284,7 +284,7 @@
         if(this.inputs[i].length < this.inputs[i].options.minLength)
           return false;
 
-        if (isNaN(parseInt(this.inputs[i].options.maxLength))){
+        if (!lang.isUndefined(this.inputs[i].options.maxLength) && isNaN(parseInt(this.inputs[i].options.maxLength))){
           this.options.messages.custom = "maxLength property is invalid. Please go to the admin and update the maxLength of the field"
           return false;
         }
