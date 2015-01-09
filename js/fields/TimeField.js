@@ -20,7 +20,7 @@ inputEx.TimeField = function(options) {
       {type: 'select', choices: m },
       {type: 'select', choices: secs }
    ];
-   options.separators = options.separators || [false,":",":",false];
+   options.separators = options.separators || [":",":"];
    inputEx.TimeField.superclass.constructor.call(this,options);
 };
 lang.extend(inputEx.TimeField, inputEx.CombineField, {   

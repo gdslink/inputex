@@ -30,14 +30,8 @@ lang.extend(inputEx.DateTimeField, inputEx.CombineField, {
     */
    getValue: function() {
       var d = this.inputs[0].getValue();
-      if( d == '' ) return null;
-      var a = this.inputs[1].getValue().split(':');
-      
-      d.setHours(a[0]);
-      d.setMinutes(a[1]);
-      d.setSeconds(a[2]);
-      
-      return d;
+      if( d == '' ) return;
+      return d + " " + this.inputs[1].getValue();
    },
 
    /**
@@ -46,12 +40,8 @@ lang.extend(inputEx.DateTimeField, inputEx.CombineField, {
     * @param {boolean} [sendUpdatedEvt] (optional) Wether this setValue should fire the updatedEvt or not (default is true, pass false to NOT send the event)
     */
    setValue: function(val, sendUpdatedEvt) {
-      if(!lang.isObject(val)) {return;}
-      var h = val.getHours();
-      var m = val.getMinutes();
-      var s = val.getSeconds();
-      var time = ([(h < 10 ? '0':'')+h, (m < 10 ? '0':'')+m, (s < 10 ? '0':'')+s]).join(':');
-      inputEx.DateTimeField.superclass.setValue.call(this, [val, time], sendUpdatedEvt);
+       var dt = val.split(' ');
+       inputEx.DateTimeField.superclass.setValue.call(this, [dt[0], dt[1]], sendUpdatedEvt);
    }
 
 });
