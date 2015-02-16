@@ -42,7 +42,7 @@ lang.extend(inputEx.TimeField, inputEx.CombineField, {
     * @param {boolean} [sendUpdatedEvt] (optional) Wether this setValue should fire the updatedEvt or not (default is true, pass false to NOT send the event)
     */
    setValue: function(str, sendUpdatedEvt) {
-      inputEx.TimeField.superclass.setValue.call(this, str.split(':'), sendUpdatedEvt);
+       YAHOO.lang.isUndefined(str) ? "" : inputEx.TimeField.superclass.setValue.call(this, str.split(':'), sendUpdatedEvt);
    }
 
 });
