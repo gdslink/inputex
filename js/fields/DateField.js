@@ -143,6 +143,8 @@
                 return (new Date(Y, m, d));
             } else {
                 var ladate = sDate.match(/(\d{4})(\d{2})(\d{2})/);
+                if (lang.isNull(ladate))
+                    return '';
                 var Y = parseInt(ladate[1], 10);
                 var m = parseInt(ladate[2], 10) - 1;
                 var d = parseInt(ladate[3], 10);
@@ -158,12 +160,14 @@
      * Those methods are limited but largely enough for our usage
      */
     inputEx.DateField.formatDate = function (d, format) {
-        var str = format.replace('Y', d.getFullYear());
-        var m = d.getMonth() + 1;
-        str = str.replace('m', ((m < 10) ? '0' : '') + m);
-        var day = d.getDate();
-        str = str.replace('d', ((day < 10) ? '0' : '') + day);
-        return str;
+        if (d instanceof Date) {
+            var str = format.replace('Y', d.getFullYear());
+            var m = d.getMonth() + 1;
+            str = str.replace('m', ((m < 10) ? '0' : '') + m);
+            var day = d.getDate();
+            str = str.replace('d', ((day < 10) ? '0' : '') + day);
+            return str;
+        }
     };
 
 // Specific message for the container
