@@ -110,7 +110,8 @@
 
         // Throw Error if input is undefined
         if (!fieldOptions) {
-          throw new Error("inputEx.Form: One of the provided fields is undefined ! (check trailing comma)");
+          // throw new Error("inputEx.Form: One of the provided fields is undefined ! (check trailing comma)");
+          console.log("inputEx.Form: One of the provided fields is undefined ! (check trailing comma)")
         }
 
         // Render the field
@@ -132,6 +133,7 @@
      */
     addField: function(fieldOptions) {
       var field = this.renderField(fieldOptions);
+      field.parentObj=this;
       this.fieldset.appendChild(field.getEl());
     },
 

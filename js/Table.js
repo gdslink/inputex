@@ -33,6 +33,7 @@
          * Adds some options: legend, collapsible, fields...
          * @param {Object} options Options object as passed to the constructor
          */
+         
         setOptions:function (options) {
             inputEx.Table.superclass.setOptions.call(this, options);
 
@@ -57,28 +58,115 @@
 
             // associate the table with the initial fields list
             if (typeof this.options.fields !== 'undefined' && this.options.fields.length == 0 && this.numberOfFieldsInTable() > 0) {
-                this.updateFieldList();
+               this.updateFieldList();
             }
 
             this.subscribeToTableDidChangeEvent();
+
+            if(this.parentField.fieldContainer)
+              this.selectTableField = this.parentField.fieldContainer.querySelector("#name-field");
+            
+            if(this.selectTableField && this.addAllFieldsElement){
+               this.handleActionAllButtonsVisibility(this.getFieldsBySelectedTable());
+            }
         },
-
+        getFieldsBySelectedTable:function(){
+          var tmpFields=[];
+            if(inputEx.TablesFields){
+              var currentSelectedValue=this.selectTableField.options[this.selectTableField.selectedIndex].value;
+              this.currentSelectedTableText=this.selectTableField.options[this.selectTableField.selectedIndex].text;
+              for (var i = 0; i < inputEx.TablesFields.length; i++) {
+                  if (inputEx.TablesFields[i].table.key == currentSelectedValue) {
+                   tmpFields=inputEx.TablesFields[i].table.fields
+                  }
+              }
+            }
+          return tmpFields
+        },
+        handleActionAllButtonsVisibility:function(pFields){
+          if(pFields.length > 0){
+            this.addAllFieldsElement.style.visibility="visible"
+            this.removeTableFieldsElement.style.visibility="visible"
+            this.removeAllFieldsElement.style.visibility="visible"
+            if(this.currentSelectedTableText){
+                        this.addAllFieldsElement.value=I18n.t('form.button.actions.add_all_fields')+" "+this.currentSelectedTableText
+                        this.removeTableFieldsElement.value=I18n.t('form.button.actions.remove_table_fields')+" "+this.currentSelectedTableText}
+          }else{
+            if(this.addAllFieldsElement)this.addAllFieldsElement.style.visibility="hidden"
+            if(this.removeTableFieldsElement)this.removeTableFieldsElement.style.visibility="hidden"
+            if(this.removeAllFieldsElement)this.removeAllFieldsElement.style.visibility="hidden"
+          }
+        },
+        updateFieldsAndAddAll:function(){
+            this.controllerObj.updateFieldList(true);
+        },
+        fieldIsInFields:function(pName){
+          for(var f=0;f<this.options.fields.length;f++){
+              if(this.options.fields[f].name===pName){
+                return true;
+              }
+          }
+          return false;
+        },
+        removeAllFields:function(){
+           this.controllerObj.setFieldsList(this.controllerObj.parentField.group, []);
+           this.controllerObj.options.fields=[];
+        }
+        ,
+        removeOnlyTableFields:function(){
+          var tmpFields=[];
+          for(var f=0;f<this.controllerObj.options.fields.length;f++){
+            var deleteField=false;
+            for (var i = 0; i < inputEx.TablesFields.length; i++) {
+                if (inputEx.TablesFields[i].table.key == this.controllerObj.options.name) {
+                    for (var j = 0; j < inputEx.TablesFields[i].table.fields.length; j++) {
+                      var tmpName=inputEx.TablesFields[i].table.fields[j].name + '@_@@_@' + inputEx.TablesFields[i].table.fields[j].key;
+                      if(this.controllerObj.options.fields[f].name ===  tmpName){
+                        deleteField=true;
+                        break;
+                      }
+                    }
+                }
+            }
+            if(!deleteField){
+              tmpFields.push(this.controllerObj.options.fields[f])
+            }
+          }
+           this.controllerObj.setFieldsList(this.controllerObj.parentField.group, tmpFields);
+           this.controllerObj.options.fields=tmpFields;
+        },
         initEvents:function(){
-            this.addAllFieldsElement = document.getElementsByName("addallfields");
-            this.removeAllFieldsElement = document.getElementsByName("removeallfields");
-            Event.addListener(this.addAllFieldsElement,"click",function(e, obj){
-                obj.updateFieldList(true);
-            }, this)
+          if(this.parentField.fieldContainer){
+            this.addAllFieldsElement = this.parentField.fieldContainer.querySelector("#addallfields-button");
+            if(this.addAllFieldsElement) {
+              this.addAllFieldsElementInitialText=this.addAllFieldsElement.value;
+                this.addAllFieldsElement.controllerObj = this;
+                this.addAllFieldsElement.addEventListener("click",this.updateFieldsAndAddAll);
+            }
 
-            Event.addListener(this.removeAllFieldsElement,"click",function(e, obj){
-                obj.setFieldsList(obj.parentField.group, []);
-            }, this)
 
-            inputEx.Table.superclass.initEvents.call(this);
+            this.removeAllFieldsElement = this.parentField.fieldContainer.querySelector("#removeallfields-button");
+            if(this.removeAllFieldsElement) {
+                this.removeAllFieldsElement.controllerObj = this;
+                this.removeAllFieldsElementInitialText=this.removeAllFieldsElement.value;
+                this.removeAllFieldsElement.addEventListener("click", this.removeAllFields)
+            }
 
+            this.removeTableFieldsElement = this.parentField.fieldContainer.querySelector("#removeTablefields-button");
+            if(this.removeTableFieldsElement) {
+                this.removeTableFieldsElement.controllerObj = this
+                this.removeTableFieldsElement.addEventListener("click", this.removeOnlyTableFields)
+            }
+
+            
+
+            this.handleActionAllButtonsVisibility(this.getFieldsBySelectedTable());
+          }
+          inputEx.Table.superclass.initEvents.call(this);
         },
 
         subscribeToTableDidChangeEvent:function () {
+          
             if (this.parentField && this.parentField.group && this.parentField.group.type == 'table') {
                 for (var i = 0; i < this.parentField.group.inputs.length; i++) {
                     if (this.parentField.group.inputs[i].type == 'dynamictable') {
@@ -92,7 +180,7 @@
 
         onTableDidChange:function (e, args) {
             this.options.name = args[0];
-            this.updateFieldList();
+            this.updateFieldList(false,true);
         },
 
         numberOfFieldsInTable:function () {
@@ -110,25 +198,36 @@
          * Retrieve the list of tables to be used to populate
          * the select field
          */
-        updateFieldList:function (addAllFields) {
+        updateFieldList:function (addAllFields,checkButtonsVisibility) {
             try {
                 var fields = [];
-                this.setFieldsList(this.parentField.group, []);
+
+                if (addAllFields !== true) this.setFieldsList(this.parentField.group, []);
+                else fields=this.options.fields
                 for (var i = 0; i < inputEx.TablesFields.length; i++) {
                     if (inputEx.TablesFields[i].table.key == this.options.name) {
                         for (var j = 0; j < inputEx.TablesFields[i].table.fields.length; j++) {
-
-                            fields.push({
-                                label:inputEx.TablesFields[i].table.fields[j].name,
-                                name:inputEx.TablesFields[i].table.fields[j].name + '@_@@_@' + inputEx.TablesFields[i].table.fields[j].key,
-                                value:inputEx.TablesFields[i].table.fields[j].default_value,
-                                type:this.getFieldType(inputEx.TablesFields[i].table.fields[j].field_type)
-                            });
+                          var tmpName=inputEx.TablesFields[i].table.fields[j].name + '@_@@_@' + inputEx.TablesFields[i].table.fields[j].key;
+                          if(!this.fieldIsInFields(tmpName)){
+                              fields.push({
+                                  label:inputEx.TablesFields[i].table.fields[j].name,
+                                  name:tmpName,
+                                  value:inputEx.TablesFields[i].table.fields[j].default_value,
+                                  type:this.getFieldType(inputEx.TablesFields[i].table.fields[j].field_type)
+                             });
+                          }
                         }
                         break;
                     }
                 }
-                if (addAllFields == true) this.setFieldsList(this.parentField.group, fields);
+
+             if(checkButtonsVisibility===true){
+                this.handleActionAllButtonsVisibility(fields);
+              }
+              
+              if (addAllFields == true){
+                  this.setFieldsList(this.parentField.group, fields,false);
+                }
             } catch (err) {
                 console.log("inputEx.TablesFields is undefined. - " + err)
             }
@@ -136,33 +235,40 @@
 
         addField:function (fieldOptions) {
             var field = this.renderField(fieldOptions);
+            field.parentObj=this
             this.fieldset.appendChild(field.getEl());
         },
-
-        destroy:function () {
-            if (this.options.parentTableDidChange) this.options.parentTableDidChange.unsubscribe(this.onTableDidChange, this);
-
-            // Destroy group itself
-            inputEx.Table.superclass.destroy.call(this);
-
+        getFieldsList:function(group){
+          for (var i = 0; i < group.inputs.length; i++) {
+                if (group.inputs[i].type == 'list') {
+                    return group.inputs[i].fi
+                }
+            }
         },
-
-        setFieldsList:function (group, fields) {
+        setFieldsList:function (group, fields,sendevent) {
             for (var i = 0; i < group.inputs.length; i++) {
                 if (group.inputs[i].type == 'list') {
-                    group.inputs[i].setValue(fields);
+                    group.inputs[i].setValue(fields,sendevent);
                 }
             }
         },
 
         destroy: function(){
-            if(typeof this.addAllFieldsElement !== 'undefined'){
-                Event.removeListener(this.addAllFieldsElement, "click");
+            // Destroy group itself
+            if (this.options.parentTableDidChange) this.options.parentTableDidChange.unsubscribe(this.onTableDidChange, this,false);
+            if(typeof this.addAllFieldsElement !== 'undefined' &&  this.addAllFieldsElement!=null){
+                this.addAllFieldsElement.removeEventListener("click",this.updateFieldsAndAddAll);
             }
 
-            if(typeof this.removeAllFieldsElement !== 'undefined'){
-                Event.removeListener(this.removeAllFieldsElement, "click");
+            if(typeof this.removeAllFieldsElement !== 'undefined' &&  this.removeAllFieldsElement!=null){
+                this.removeAllFieldsElement.removeEventListener("click",this.removeAllFields);
             }
+
+            if(typeof this.removeTableFieldsElement !== 'undefined' &&  this.removeTableFieldsElement!=null){
+                this.removeTableFieldsElement.removeEventListener("click",this.removeOnlyTableFields);
+            }
+
+            inputEx.Table.superclass.destroy.call(this);
         }
     });
 
@@ -193,14 +299,10 @@
             value:false
         },
         {
-            type:'list',
-            label: I18n.t('form.field.fields'),
-            name:'fields',
-            sortable:'true',
+            type:'uneditable',
+            name: 'spacer',
             align: 'true',
-            elementType:{
-                type:'type'
-            }
+            label:' '
         },
         {
             type:'button',
@@ -210,9 +312,28 @@
         },
         {
             type:'button',
+            label: I18n.t('form.button.actions.remove_table_fields'),
+            name:'removeTablefields'
+        },
+        {
+            type:'uneditable',
+            name: 'spacer',
+            align: 'true',
+            label:' '
+        },
+        {
+            type:'button',
             label: I18n.t('form.button.actions.remove_all_fields'),
-            name:'removeallfields',
-            align: 'true'
+            name:'removeallfields'
+        },
+        {
+            type:'list',
+            label: I18n.t('form.field.fields'),
+            name:'fields',
+            sortable:'true',
+            elementType:{
+                type:'type'
+            }
         },
         {
             type:'string',
