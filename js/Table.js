@@ -72,7 +72,7 @@
         },
         getFieldsBySelectedTable:function(){
           var tmpFields=[];
-            if(inputEx.TablesFields){
+            if(inputEx.TablesFields && this.selectTableField){
               var currentSelectedValue=this.selectTableField.options[this.selectTableField.selectedIndex].value;
               this.currentSelectedTableText=this.selectTableField.options[this.selectTableField.selectedIndex].text;
               for (var i = 0; i < inputEx.TablesFields.length; i++) {
